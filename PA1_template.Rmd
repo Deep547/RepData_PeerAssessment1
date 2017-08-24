@@ -1,25 +1,112 @@
+
+
+
+
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Assignment"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r,echo = TRUE}
+MyData <- read.csv(file="C:/Users/kumad22/Downloads/Coursera_M2W2/activity.csv", header=TRUE, sep=",")
+summary(MyData)
+ssteps<-tapply(MyData$steps,MyData$date,sum,na.rm=TRUE)
+## Mean and median number of steps taken per day
+mean(ssteps)
+median(ssteps)
+library(dplyr)
+```
+
+## Calculate the total number of steps taken per day & Histogram of the total number of steps taken each day.
+```{r,echo = TRUE}
+   new<-aggregate.data.frame(MyData$steps, by=list(date=MyData$date),FUN=sum,na.rm=TRUE)
+   colnames(new)[2] <- "steps"
+   head(new)
+   library(ggplot2)
+   library(lubridate)
+   new$date <- ymd(new$date)
+   ggplot(data=new,aes(date,steps),xName='date',xShowTitle=TRUE,yShowTitle=TRUE,xShowTickLabel=FALSE,yShowTickLabel=FALSE)+geom_histogram(stat="identity")
+  ```
+  
+## Time series plot of the average number of steps taken.
+```{r,echo = TRUE}
+   new<-aggregate.data.frame(MyData$steps, by=list(interval=MyData$interval),FUN=mean,na.rm=TRUE)
+   colnames(new)[2] <- "steps"
+   head(new)
+   ggplot(new, aes(interval, steps),xName='date',xShowTitle=TRUE,yShowTitle=TRUE,xShowTickLabel=FALSE,yShowTickLabel=FALSE) + geom_line(stat="identity")
+   
+```
+## The 5-minute interval that, on average, contains the maximum number of steps
+```{r,echo = TRUE}
+   z<-new[which(new$steps==max(new$steps)),]
+   z$interval
+```
+
+## Code to describe and show a strategy for imputing missing data 
+#### In the data set provided,a lot of cells specially under the column steps are missing(their values are NA).
+```{r,echo = TRUE}
+   act <- read.csv(file="C:/Users/kumad22/Downloads/Coursera_M2W2/activity.csv",header=TRUE, sep=",",colClasses = c("numeric", "character","integer"))
+   a<-sum(is.na(MyData))
+   a
+   library(dplyr)
+   data<-act %>% 
+   group_by(interval) %>%
+   mutate(steps = ifelse(is.na(steps), median(steps, na.rm=TRUE), steps))
+   summary(data)
+```
+
+## Make a histogram of total number of steps taken each day
+```{r,echo = TRUE}
+  data$date <- ymd(data$date)
+  ggplot(data=data,aes(date,steps),   xName='date',xShowTitle=TRUE,yShowTitle=TRUE,xShowTickLabel=FALSE,yShowTickLabel=FALSE)+geom_histogram(stat="identity")
+```
+
+###Mean and median for the new data
+```{r,echo = TRUE}
+new_steps<-tapply(data$steps,data$date,sum,na.rm=TRUE)
+mean(new_steps)
+median(new_steps)
+```
+
+#### Check if the mean and median of the new data is different form that of the previous one.
+```{r,echo = TRUE}
+  mean(ssteps)==mean(new_steps)
+  median(ssteps)==median(new_steps)
+#### What is the impact of imputing missing data on the estimates of the total daily number of steps?Min values increases by 41 units and mean increases by 149.6 units.
+  summary(ssteps)
+  summary(new_steps)
+  summary(new_steps) - summary(ssteps)
+  hist(ssteps,col="yellow")
+  hist(new_steps,col="blue")
+  ```
+  
+  ```{r,echo = TRUE}
+  library(chron)
+  library(lattice)
+  #actdata <- read.csv(file="C:/Users/kumad22/Downloads/Coursera_M2W2/activity.csv")
+  data$date <- as.Date(data$date, "%Y-%m-%d")
+  days <- weekdays(data$date)
+  data$day_type <- ifelse(days == "Saturday" | days == "Sunday", "Weekend", "Weekday")
+  meansteps <- aggregate(data$steps, by = list(data$interval, data$day_type), mean)
+  head(meansteps)
+  ```
+  
+  ```{r,echo = TRUE}
+  colnames(meansteps) <- c("interval", "day", "steps")
+  head(meansteps)
+  ```
+```{r,echo = TRUE}
+xyplot(steps ~ interval | day, meansteps, type = "l", layout = c(1, 2), xlab = "Interval", ylab = "Number of steps")
+```
 
 
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
